@@ -1,16 +1,51 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using TMPro;
+using System.IO;
 
 public class UIManager : MonoBehaviour
 {
+    public InputField playerName; // Khai báo static cho InputField
+    public int Score;
     public static UIManager Instance;
-    public TextMeshProUGUI playerName;
+
+    [System.Serializable]
+    class SaveData
+    {
+        public string playerName;
+        public int Score;
+    }
+
+    public void SaveBestTime()
+    {
+        SaveData data = new SaveData
+        {
+            playerName = playerName.text,
+            Score = Score
+        };
+
+        string json = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+    public void LoadBestTime()
+    {
+        string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+       
+                playerName.text = data.playerName; // Gán giá trị cho InputField
+            
+            Score = data.Score;
+        }
+    }
 
     private void Awake()
     {
@@ -22,22 +57,16 @@ public class UIManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
+
+        // Tải dữ liệu từ tệp
+        LoadBestTime();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
     public void StartGame()
     {
         SceneManager.LoadScene(1);
     }
+
     public void ExitGame()
     {
 #if UNITY_EDITOR
@@ -45,6 +74,5 @@ public class UIManager : MonoBehaviour
 #else
         Application.Quit();
 #endif
-
     }
 }
